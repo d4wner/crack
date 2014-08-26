@@ -40,6 +40,7 @@ class timer(threading.Thread): #The timer class is derived from the class thread
             if crack_md5asia(self.HASH):
                 return True
         except Exception,e:
+            print "asia=>"
             print e
             pass
         
@@ -47,9 +48,9 @@ class timer(threading.Thread): #The timer class is derived from the class thread
             if crack_cc(self.HASH):
                 return True
         except Exception,e:
+            print 'cc=>'
             print e
             pass
-        
         try:
             if crack_silic(self.HASH):
                 return True
@@ -72,7 +73,7 @@ class timer(threading.Thread): #The timer class is derived from the class thread
             pass
         
         print "[x]HASH Crack: "+self.HASH+" failed."
-        f.writelines(HASH+'\n')
+        f.writelines(self.HASH+'\n')
         return False 
               
 
@@ -105,25 +106,23 @@ class Parselinks(HTMLParser.HTMLParser):
 
 
 #From http://www.md5.asia/
-def crack_md5asia(Hash):   
-    str_url=["http://md5ss.sinaapp.com/md5_decode.php?decoder=5&timeout=10&hash=",Hash]
+def crack_md5asia(HASH):   
+    str_url=["http://md5ss.sinaapp.com/md5_decode.php?decoder=5&timeout=10&hash=",HASH]
     url="".join(str_url)
-    #print url
             
     try:
         sock=urllib.urlopen(url)
-        htmlSources=sock.read()
+        resp=sock.read()
     except:
         #print "Not Found"
         return False
     else:
         sock.close()
     #本来这个地方，应该比较"未找到,"，但是由于编码的问题，会出问题。因此，改为16进制了。
-    if string.find(htmlSources,"\346\234\252\346")!=-1:
+    if string.find(resp,"\346\234\252\346")!=-1:
         return False
         #print "Not Found2"
     else:
-        print "Password Found:",htmlSources
         s.writelines(HASH+' '+resp+'\n')
         print 'asia:',resp
         return True
@@ -143,9 +142,8 @@ def crack_comcn(HASH):
     req = urllib2.Request(url = requrl,data =post_data_urlencode)
     req.add_header('Referer', "http://www.md5.com.cn/")
     resps = urllib2.urlopen(req)
-    match = re.findall('Result:.*green">.*<\/span',resps.read())
-    re_match=re.findall('green">.*<\/span><div',match[0])[0][7:-11]
-    #print re_match[0][7:-11]
+    match = re.findall('green">.*<\/span',resps.read())
+    re_match = match[1][7:-6]
     s.writelines(HASH+' '+re_match+'\n')
     print 'comcn:',re_match
     return True
@@ -159,9 +157,8 @@ def crack_silic(HASH):
     req = urllib2.Request(url = requrl,data =post_data_urlencode)
     res_data = urllib2.urlopen(req)
     res = res_data.read()
-    #print res
+    print res
     resp = re.findall('Password <strong>.*<\/strong>',res)[0][17:-9]
-    #print resp
     s.writelines(HASH+' '+resp+'\n')
     print 'silic:',resp
     return True
@@ -178,7 +175,6 @@ def crack_cc(HASH):
     return True
 
 def crack_somd5(HASH):
-
     resp=urllib.urlopen('http://www.somd5.com/somd5-md5-js.html').read()
     ajax_data=re.findall('isajax=.*&',resp)[0][7:-1]
     post_data = {'isajax':ajax_data,'md5':HASH}
@@ -188,8 +184,8 @@ def crack_somd5(HASH):
     resps = urllib2.urlopen(req).read()
     match = re.findall('<h1.*line;">.*<\/h1',resps)[0]
     re_match = re.findall('">.*</',match)[0][2:-2]
-    s.writelines(HASH+' '+resp+'\n')
-    print "somd5",resp
+    s.writelines(HASH+' '+re_match+'\n')
+    print "somd5",re_match
     return True
 
 
@@ -244,13 +240,15 @@ if '__main__' == __name__:
                 crack_thread.join()
             else:
                 print "Hash长度出错."
-        elif cmd == 'dic':
+        elif cmd == '-dic':
             for line in open('hash.txt','r'):
                 if len(line.strip())==16 or len(line.strip())==32:
                     crack_thread = timer(line.strip())
                     crack_thread.start()
+                    crack_thread.join()
                     #crack(line.strip())
                 else:
+                    print "Hash长度出错."
                     continue
     s.close()
     f.close()
