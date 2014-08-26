@@ -106,7 +106,7 @@ class Parselinks(HTMLParser.HTMLParser):
 
 #From http://www.md5.asia/
 def crack_md5asia(Hash):   
-    str_url=["http://md5ss.sinaapp.com/md5_decode.php?decoder=1&timeout=10&hash=",Hash]
+    str_url=["http://md5ss.sinaapp.com/md5_decode.php?decoder=5&timeout=10&hash=",Hash]
     url="".join(str_url)
     #print url
             
