@@ -7,6 +7,7 @@ import string
 import urllib2
 import threading
 import HTMLParser
+import cookielib
 
 def showInfo():
     print """
@@ -27,7 +28,7 @@ def showInfo():
 #thread_pool=[]   
 comcn_tmp=[]
 
-global f,s
+#global f,s
 
 class timer(threading.Thread): #The timer class is derived from the class threading.Thread  
     def __init__(self, HASH):  
@@ -36,35 +37,42 @@ class timer(threading.Thread): #The timer class is derived from the class thread
    
     def run(self):  
         try:
-            if crack_md5asia(self.Hash):
-                    return True
-        except:
+            if crack_md5asia(self.HASH):
+                return True
+        except Exception,e:
+            print e
             pass
         
         try:
-            if crack_cc(self.Hash):
+            if crack_cc(self.HASH):
                 return True
-        except:
+        except Exception,e:
+            print e
             pass
         
         try:
             if crack_silic(self.HASH):
                 return True
-        except:
+        except Exception,e:
+            print e
             pass
         
         try:
             if crack_comcn(self.HASH):
                 return True
-        except:
+        except Exception,e:
+            print e
             pass
 
         try:
             if crack_somd5(self.HASH):
                 return True
-        except:
+        except Exception,e:
+            print e
             pass
-        print "[x]HASH Crack: "+HASH+" failed."
+        
+        print "[x]HASH Crack: "+self.HASH+" failed."
+        f.writelines(HASH+'\n')
         return False 
               
 
@@ -97,8 +105,8 @@ class Parselinks(HTMLParser.HTMLParser):
 
 
 #From http://www.md5.asia/
-def crack_asia(Hash):   
-    str_url=["http://115.29.243.4/md5_decode.php?decoder=1&timeout=10&hash=",Hash]
+def crack_md5asia(Hash):   
+    str_url=["http://md5ss.sinaapp.com/md5_decode.php?decoder=1&timeout=10&hash=",Hash]
     url="".join(str_url)
     #print url
             
@@ -113,10 +121,11 @@ def crack_asia(Hash):
     #本来这个地方，应该比较"未找到,"，但是由于编码的问题，会出问题。因此，改为16进制了。
     if string.find(htmlSources,"\346\234\252\346")!=-1:
         return False
-        #print "Not Found"
+        #print "Not Found2"
     else:
-        #print "Password Found:",htmlSources
-        f.writelines(HASH+' '+resp+'\n')
+        print "Password Found:",htmlSources
+        s.writelines(HASH+' '+resp+'\n')
+        print 'asia:',resp
         return True
         #exit(1)
 
@@ -137,7 +146,8 @@ def crack_comcn(HASH):
     match = re.findall('Result:.*green">.*<\/span',resps.read())
     re_match=re.findall('green">.*<\/span><div',match[0])[0][7:-11]
     #print re_match[0][7:-11]
-    f.writelines(HASH+' '+re_match+'\n')
+    s.writelines(HASH+' '+re_match+'\n')
+    print 'comcn:',re_match
     return True
 
 
@@ -152,7 +162,8 @@ def crack_silic(HASH):
     #print res
     resp = re.findall('Password <strong>.*<\/strong>',res)[0][17:-9]
     #print resp
-    f.writelines(HASH+' '+resp+'\n')
+    s.writelines(HASH+' '+resp+'\n')
+    print 'silic:',resp
     return True
 
 def crack_cc(HASH):
@@ -162,7 +173,8 @@ def crack_cc(HASH):
     res=urllib2.urlopen(request).read()
     resp = re.findall('25px">.*<\/span>',res)[0][6:-7].strip()
     #print resp[6:-7].strip()
-    f.writelines(HASH+' '+resp+'\n')
+    s.writelines(HASH+' '+resp+'\n')
+    print "cc:",resp
     return True
 
 def crack_somd5(HASH):
@@ -176,7 +188,8 @@ def crack_somd5(HASH):
     resps = urllib2.urlopen(req).read()
     match = re.findall('<h1.*line;">.*<\/h1',resps)[0]
     re_match = re.findall('">.*</',match)[0][2:-2]
-    f.writelines(HASH+' '+resp+'\n')
+    s.writelines(HASH+' '+resp+'\n')
+    print "somd5",resp
     return True
 
 
@@ -198,7 +211,7 @@ if '__main__' == __name__:
                     =o=
                      n
     """
-
+    global f,s
 
     if len(sys.argv)<2 :
          print "参数错误"
@@ -206,9 +219,14 @@ if '__main__' == __name__:
          exit(1)
      
     cmds = ['-hash','-dic']
+    #print sys.argv[1]+'=='
+    #print sys.argv[2]+'=='
+    #print len(sys.argv)
      
+    s=open('success_result.txt','w+')
+    f=open('fail_result.txt','w+')
     cmd = sys.argv[1]
-    if len(sys.argv)!=3 :
+    if len(sys.argv) == 3 :
         Hash=sys.argv[2]
          
     if 0 == cmds.count(cmd):  
@@ -217,16 +235,16 @@ if '__main__' == __name__:
         showInfo()
         exit(1)
     else:
-        #print 'Start working,Please waiting...'
+        print 'Start working,Please waiting...'
         if cmd == '-hash':
             if len(Hash)==16 or len(Hash)==32:
-                crack_thread = timer(line.strip())
+                crack_thread = timer(Hash)
                 crack_thread.start()
+                #crack_thread.setDamon()
+                crack_thread.join()
             else:
                 print "Hash长度出错."
         elif cmd == 'dic':
-            s=open('success_result.txt','w+')
-            f=open('fail_result.txt','w+')
             for line in open('hash.txt','r'):
                 if len(line.strip())==16 or len(line.strip())==32:
                     crack_thread = timer(line.strip())
@@ -234,9 +252,9 @@ if '__main__' == __name__:
                     #crack(line.strip())
                 else:
                     continue
-            f.close()
-            s.close()
-        print "Crack ending...."
+    s.close()
+    f.close()
+    print "Crack ending...."
 
 
         
