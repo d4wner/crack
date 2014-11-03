@@ -12,8 +12,12 @@ import cookielib
 def showInfo():
     print """
      命令格式：
-     [mail_md5_crack.py -d]  or\n
+     [mail_md5_crack.py -d]  or
      [mail_md5_crack.py -f filename]
+     预处理格式：
+     [demon@dawner.info|e825b5f2bbf1eb76]
+     结果格式：
+     [demon@dawner.info|asd123|mail.dawner.info]
            """
 
     #print "trying www.cmd5.com    ====>"
