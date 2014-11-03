@@ -224,7 +224,7 @@ if '__main__' == __name__:
          showInfo()
          exit(1)
      
-    cmds = ['-dic']
+    cmds = ['-d,-f']
      
     s=open('result_mail.txt','w+')
     cmd = sys.argv[1]
