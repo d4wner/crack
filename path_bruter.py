@@ -28,7 +28,7 @@ source_url = ""
 def usage():
     print'''This program made by newbie008@wooyun.org and recoding by demon version 2.0 
 
-Usage:python main.py [-u|-o|-p|-d|-t]
+Usage:python main.py [-u|-o|-p|-d|-t|-s]
 
 -u:url single url eg:'https://www.baidu.com'
 -o:output eg:'123.txt'
