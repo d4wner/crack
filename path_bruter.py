@@ -1,6 +1,6 @@
 #-*- coding: utf-8 -*-
-#origin  author  = 'newbie'
-#recoding by demon
+#origin author = 'newbie'
+#recoding author = 'demon'
 import re
 import sys,getopt
 import Queue
@@ -15,43 +15,39 @@ import random
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
-
+#####################
 global r
 proxy_file = ""
+threads = 5
+output = "result.txt"
+source_url = ""
+
+'''Default settings'''
+#####################
 
 def usage():
-    print'''This program just made by newbie008@wooyun.org
-       version 1.0
-Usage:python scanadmin.py [-u|-f]
+    print'''This program made by newbie008@wooyun.org and recoding by demon version 2.0 
 
-    -u:Url is what U want to scan
-           Example:scanadmin.py -u "http://www.baidu.com"
-    -f:File data like "editor" or"admin" etc
-           Example:scanadmin.py -u "http://www.baidu.com" -f "/home/admin.txt"
+Usage:python main.py [-u|-o|-p|-d|-t]
+
+-u:url single url eg:'https://www.baidu.com'
+-o:output eg:'123.txt'
+-p:proxy  eg:'ip_list.txt'
+-d:dictionary file_ext:txt  eg 'asp:aspx:php'
+-t:threads  eg:'5'
+-s source_url file,multi urls,not be with -u eg:'source.txt'
+
+eg:
+python path_bruter.py -u http://www.bstaint.net -d x:c -t 8 -o result.txt
+python path_bruter.py -s url.txt -d x -t 10 -o result.txt
+
+
 '''
 #admin=['-admin','2013','adminer','_admin','2012','_2012''2008','_system','_sys_admin']
 resp_code = [200,302,403,500]
-error_flag = [u'页面不存在',u'页面没找到']
+'''You can choose the resp_code you need here.'''
+error_flag = [u'页面不存在',u'页面没找到','404']
 dir=[]
-#def normaldomain(str):
-#    for i in range(len(str)):
-#       newstr=str[0:(i+1)]
-#       for a in admin:
-#           dir.append(newstr+a)
-
-
-#def btdomain(target_url):
-#    newstr=target_url.split('-')
-#    for item in newstr:
-#        normaldomain(item)
-
-#def FileScan(file):
-#    f=open(file)
-#    data=f.readlines()
-#    for line in data:
-#        line=line.strip()
-#        dir.append(line)
-#    f.close()
 
 def proxy(ip_file,host):
     ''' eg: http 192.168.1.1 1010 '''
@@ -109,11 +105,11 @@ class ThreadUrl(threading.Thread):
                 #:Wprint response
                 for flag in error_flag:
                     if flag in response.read():
-                        print '404 Error..'
+                        print 'Diy 404 Error..'
                         respcode = "404"
                         break
                     else:
-                        print "???"
+                        #print "?a??"
                         respcode= response.getcode()
                 result =  '[+]%s  %s'%(respcode,host)
                 #print response.getcode()
@@ -141,14 +137,14 @@ if __name__ == '__main__':
         sys.exit(1)
     else:
         try:
-            opts,args = getopt.getopt(sys.argv[1:], "hu:o:e:d:p:");
+            opts,args = getopt.getopt(sys.argv[1:], "hu:o:d:p:t:s:");
             for opt,arg in opts:
                 if opt =="-h":
                     usage();
                     sys.exit(1);
                 elif opt == "-u":
                     target=arg
-                    target_url=re.match(r'\w+:\/\/\w+\.(.*?)\.\w+',arg).group(1)                    
+                    #target_url=re.match(r'\w+:\/\/\w+\.(.*?)\.\w+',arg).group(1)                    
                 elif opt == "-o":
                     output=arg
                     #FileScan(file)
@@ -156,6 +152,10 @@ if __name__ == '__main__':
                     dic_path = arg
                 elif opt == "-p":
                     proxy_file = arg
+                elif opt == "-t":
+                    threads = int(arg)
+                elif opt == "-s":
+                    source_url = arg
         except:
             usage()
             sys.exit(1)
@@ -168,16 +168,17 @@ if __name__ == '__main__':
                 for item in dic_path.split(':'):
                     f = open(item+'.dic')
                     for line in f.readlines():
-                        print line.strip()
+                        #print line.strip()
                         dic.append(line.strip())
 
             except Exception,e:
                 print e
                 #return None
+            print '[+]Dic has been added...'
         elif ":" not in dic_path and dic_path != "":
             f = open(dic_path+'.dic')
             for line in f.readlines():
-                print line.strip()
+               # print line.strip()
                 dic.append(line.strip())
         else:
             print "[x]Dic path error!"
@@ -185,30 +186,27 @@ if __name__ == '__main__':
     ###################################################
 
     ###################################################
-    #normaldomain(target_url)
-    
-    #match=re.search(r'-',target_url)
-    #if match:
-    #    print 'star btscanning...'
-    #    btdomain(target_url)
-    #else:
-    #    print 'normal scanning ...'
-    #    normaldomain(target_url)
-    ###################################################
     #spawn a pool of threads, and pass them queue instance
-    r = open('result.txt','w+')
+    r = open(output,'w+')
     #if proxy_file == "":
-
-    for i in range(5):
+    print 'Scan starting...'
+    for i in range(threads):
         t = ThreadUrl(queue,proxy_file)
         t.setDaemon(True)
         t.start()
         #put the hosts to queue
-    ###or line in dir:
     for line in dic:
-        hosts=target+'/'+line+'/'
-        #print hosts+'......'
-        queue.put(hosts)
+        #hosts=target+'/'+line+'/'
+        if source_url != "":
+            for target_url in open(source_url,'r'):
+                target = target_url.strip()
+                hosts=target+'/'+line
+                queue.put(hosts)
+
+        else:
+            hosts=target+'/'+line
+            #print hosts+'......'
+            queue.put(hosts)
     queue.join()
     r.close()
     print "Elapsed Time: %s" % (time.time() - start)
