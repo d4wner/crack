@@ -25,4 +25,5 @@ Some scripts for crack attack!!!
 [-]md5_crack.py
 免费源的MD5破解集合,现在估计大部分用不了了,有需要的朋友可以给我接口,我这边更新.
 
-
+[-]UrlSimilar.py
+URL相似性判断，可以用作相似度对比插件。
