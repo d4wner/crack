@@ -1,4 +1,4 @@
-Some scripts for crack attack!!!
+﻿Some scripts for attack!!!
 
 [+]兵器库之破灭阁
 
@@ -27,3 +27,6 @@ Some scripts for crack attack!!!
 
 [-]UrlSimilar.py
 URL相似性判断，可以用作相似度对比插件。
+
+[-]title_get
+批量获取http banner，确认存活的ip或者域名，可以不自行加http[s]。
