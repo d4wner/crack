@@ -4,12 +4,9 @@
 import requests
 import re
 import sys
-#from Threads import ThreadPool
-from gevent import monkey
-monkey.patch_all()
-from gevent.pool import Pool
-#import socket
-#socket.setdefaulttimeout(5)
+from Threads import ThreadPool
+import socket
+socket.setdefaulttimeout(5)
 
 headers = {
  'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.108 Safari/537.36'
@@ -24,9 +21,8 @@ def view(url):
         title = re.search(r"<title>(.*)</title>", r.content).group()[7:-8]
         if status == 200:
             o.writelines('<tr><th><a href="'+url+'" target="_blank">'+url+'</a> </th><th>'+title+'</th><th>'+str(status)+'</th></tr>')
-        oo.writelines(url+'\n')
     except Exception,e:
-        pass
+        print e
 
 global output_file
 input_file = raw_input("Url filename:")
@@ -34,7 +30,7 @@ output_file = raw_input("Save filename:")
 thread_count = raw_input("Thread num:")
 
 
-oo = open(output_file+'.txt', 'a+')
+
 o = open(output_file+'.html', 'a+')
 
 o.writelines('''
@@ -65,23 +61,20 @@ table.tftable td {font-size:12px;border-width: 1px;padding: 8px;border-style: so
 ''')
 
 
-#tp = ThreadPool(int(thread_count))
+tp = ThreadPool(int(thread_count))
 
-pool = Pool(int(thread_count))
-
-#lines = open(input_file,'r').readlines()
-urls = []
 for line in open(input_file ,'r').readlines():
-    url =  line.strip().split(' ')[0]
-    if '@' in url or re.search('\/\d+$', url):
-        continue
+    url =  line.strip()
     if 'http' not in url:
         url = 'http://'+ url
-    urls.append(url)
-pool.map(view, urls)
+    tp.add_job(view, [url])
+tp.start()
+try:
+    tp.wait_for_complete()
+except KeyboardInterrupt:
+    tp.stop()
 
 o.writelines('</table>')
-o.close()
-oo.close()
+
 #view('https://www.baidu.com')
 
