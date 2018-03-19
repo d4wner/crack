@@ -26,6 +26,7 @@ def view(url):
             o.writelines('<tr><th><a href="'+url+'" target="_blank">'+url+'</a> </th><th>'+title+'</th><th>'+str(status)+'</th></tr>')
         oo.writelines(url+'\n')
     except Exception,e:
+        print e
         pass
 
 global output_file
@@ -72,7 +73,10 @@ pool = Pool(int(thread_count))
 #lines = open(input_file,'r').readlines()
 urls = []
 for line in open(input_file ,'r').readlines():
-    url =  line.strip().split(' ')[0]
+    url =  line.strip().replace('\t',' ').split(' ')[0]
+    if '.' not in url:
+        continue
+    print url
     if '@' in url or re.search('\/\d+$', url):
         continue
     if 'http' not in url:
