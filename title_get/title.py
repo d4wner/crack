@@ -2,6 +2,7 @@
 #coding=utf-8
 
 import requests
+requests.packages.urllib3.disable_warnings()
 import re
 import sys
 #from Threads import ThreadPool
@@ -10,6 +11,8 @@ monkey.patch_all()
 from gevent.pool import Pool
 #import socket
 #socket.setdefaulttimeout(5)
+
+import argparse
 
 headers = {
  'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.108 Safari/537.36'
@@ -29,14 +32,27 @@ def view(url):
         print e
         pass
 
-global output_file
-input_file = raw_input("Url filename:")
-output_file = raw_input("Save filename:")
-thread_count = raw_input("Thread num:")
+#global output_file
+#input_file = raw_input("Url filename:")
+#output_file = raw_input("Save filename:")
+#thread_count = raw_input("Thread num:")
 
+parser = argparse.ArgumentParser()
+parser.add_argument('-v', '--version', action='version', version='[+]Title_get script v2.0')
+parser.add_argument('-ot', '--output_txt',  type=str,  default="output_txt/",   help="Directory for scan url dir")
+parser.add_argument('-oh', '--output_html',  type=str,  default="output_html/",   help="Directory for scan url dir")
+parser.add_argument('-o', '--output_name',  type=str,  required=True ,   help="Output name for this scan")
+parser.add_argument('-i', '--input_file',  type=str , required=True,  help="Input file for this scan")
+parser.add_argument('-t' , '--thread',  type=int,  default=10,  help='Threads for this bitch script')
 
-oo = open(output_file+'.txt', 'a+')
-o = open(output_file+'.html', 'a+')
+#args = parser.parse_args(['--version'])
+args = parser.parse_args()
+print '[+]Input filename:%s'%(args.input_file)
+print '[+]Output filename:%s'%(args.output_name)
+
+oo = open(args.output_txt + args.output_name  +'.txt', 'a+')
+o = open(args.output_html + args.output_name +'.html', 'a+')
+thread_count = args.thread
 
 o.writelines('''
 <!-- Row Highlight Javascript -->
@@ -72,7 +88,7 @@ pool = Pool(int(thread_count))
 
 #lines = open(input_file,'r').readlines()
 urls = []
-for line in open(input_file ,'r').readlines():
+for line in open(args.input_file ,'r').readlines():
     url =  line.strip().replace('\t',' ').split(' ')[0]
     if '.' not in url:
         continue
