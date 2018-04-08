@@ -30,3 +30,6 @@ URL相似性判断，可以用作相似度对比插件。
 
 [-]title_get
 批量获取http banner，确认存活的ip或者域名，可以不自行加http[s]。
+
+[-]src_step_by
+批量域名scan，私人定制一键化，非适配。
