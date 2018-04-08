@@ -63,7 +63,9 @@ def cmd_exec(command):
 def step_exec(domain):
     try:
         resp_teemo = cmd_exec(teemo_base_cmd % (domain))
+        os.chdir('title_get/')
         resp_title = cmd_exec(title_base_cmd %(domain , domain))
+        os.chdir('../')
         resp_bbscan = cmd_exec(bbscan_base_cmd % (domain))
     except Exception,e:
         print e
