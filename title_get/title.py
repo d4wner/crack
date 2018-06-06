@@ -11,6 +11,7 @@ monkey.patch_all()
 from gevent.pool import Pool
 #import socket
 #socket.setdefaulttimeout(5)
+import chardet
 
 import argparse
 
@@ -23,14 +24,22 @@ headers = {
 def view(url):
     try:
         r = requests.get(url,  headers= headers ,timeout = 5 ,verify = False)
+        if keyword_filter:
+            str_type = chardet.detect(keyword_filter)['encoding'].lower()
+            if str_type == 'utf-8':
+                keyword_filter_new = keyword_filter.decode('utf-8')
+            else:
+                keyword_filter_new = unicode(keyword_filter,'gbk')
+            if re.search(keyword_filter_new, r.text):
+                print '[x]Found filter keyword!'
+                return
         status = r.status_code
-        title = re.search(r"<title>(.*)</title>", r.content).group()[7:-8]
+        title = re.search(r"<title>(.*)</title>", r.text).group()[7:-8]
         if status == 200:
             o.writelines('<tr><th><a href="'+url+'" target="_blank">'+url+'</a> </th><th>'+title+'</th><th>'+str(status)+'</th></tr>')
         oo.writelines(url+'\n')
     except Exception,e:
         print e
-        pass
 
 #global output_file
 #input_file = raw_input("Url filename:")
@@ -44,6 +53,7 @@ parser.add_argument('-oh', '--output_html',  type=str,  default="output_html/", 
 parser.add_argument('-o', '--output_name',  type=str,  required=True ,   help="Output name for this scan")
 parser.add_argument('-i', '--input_file',  type=str , required=True,  help="Input file for this scan")
 parser.add_argument('-t' , '--thread',  type=int,  default=10,  help='Threads for this bitch script')
+parser.add_argument('-k' , '--keyword_filter',  type=str,  default='',  help='the keyword you do not want to see in the page')
 
 #args = parser.parse_args(['--version'])
 args = parser.parse_args()
@@ -83,6 +93,10 @@ table.tftable td {font-size:12px;border-width: 1px;padding: 8px;border-style: so
 
 
 #tp = ThreadPool(int(thread_count))
+global keyword_filter
+keyword_filter = ""
+if args.keyword_filter:
+    keyword_filter = args.keyword_filter
 
 pool = Pool(int(thread_count))
 
