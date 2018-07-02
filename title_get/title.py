@@ -5,11 +5,13 @@ import requests
 requests.packages.urllib3.disable_warnings()
 import re
 import sys
+reload(sys)
+sys.setdefaultencoding("utf8")
 #from Threads import ThreadPool
-""" from gevent import monkey
+from gevent import monkey
 monkey.patch_all()
-from gevent.pool import Pool """
-import threadpool
+from gevent.pool import Pool
+#import threadpool
 #import socket
 #socket.setdefaulttimeout(5)
 import chardet
@@ -18,40 +20,52 @@ import datetime
 import argparse
 from IPy import IP
 import io
+import cgi
+import time
+import urlparse
 
 headers = {
  'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.108 Safari/537.36'
  }
+ 
 
 
 
 def view(url):
     try:
         r = requests.get(url,  headers= headers ,timeout = 5 ,verify = False)
-        if keyword_filter:
-            str_type = chardet.detect(keyword_filter)['encoding'].lower()
-            if str_type == 'utf-8':
-                keyword_filter_new = keyword_filter.decode('utf-8')
-            else:
-                keyword_filter_new = unicode(keyword_filter,'gbk')
-            if re.search(keyword_filter_new, r.text):
-                print '[x]Found filter keyword!'
-                return
-        status = r.status_code
-        try:
-            title = re.search(r"<title>(.*)</title>", r.text).group()[7:-8].encode('gbk')
-        except:
-            title = re.search(r"<title>(.*)</title>", r.content).group()[7:-8]
-        try:
-            server = r.headers['Server']
-        except:
-            server = ''
-        if status == 200:
-            o.writelines(u'<tr><th><a href="'+url+'" target="_blank">'+url+'</a> </th><th>'+title+'</th><th>'+server+'</th><th>'+str(status)+'</th></tr>')
-        oo.writelines(url+'\n')
     except Exception,e:
-        pass
-        #print e
+        return
+    if keyword_filter:
+        str_type = chardet.detect(keyword_filter)['encoding'].lower()
+        if str_type == 'utf-8':
+            keyword_filter_new = keyword_filter.decode('utf-8')
+        else:
+            keyword_filter_new = unicode(keyword_filter,'gbk')
+        if re.search(keyword_filter_new, r.text):
+            print '[x]Found filter keyword!'
+            return
+    status = r.status_code
+    try:
+        title = re.search(r"<title>(.*)</title>", r.text).group()[7:-8].encode('gbk')
+    except:
+        try:
+            title = re.search(r"<title>(.*)</title>", r.content).group()[7:-8]
+        except:
+            title = ''
+    title = cgi.escape(title)
+    try:
+        server = r.headers['Server']
+    except:
+        server = ''
+    if status == 200:
+        try:
+            output_th = unicode('<tr> <th><a href="'+url+'" target="_blank">'+url+'</a></th> <th>'+title+'</th> <th>'+server+'</th> <th>'+str(status)+'</th> </tr>')
+        except:
+            output_th = unicode('<tr> <th><a href="'+url+'" target="_blank">'+url+'</a></th> <th>'+title+'</th> <th>'+server+'</th> <th>'+str(status)+'</th> </tr>','gbk')
+        print '[+]Detecting %s...' % (url)
+        o.writelines(output_th)
+    oo.writelines(unicode(url+'\n'))
 
 if __name__ == '__main__':
 
@@ -66,7 +80,8 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--input_file',  type=str , default='', help="Input file for this scan")
     parser.add_argument('-t' , '--thread',  type=int,  default=10,  help='Threads for this bitch script')
     parser.add_argument('-k' , '--keyword_filter',  type=str,  default='',  help='the keyword you do not want to see in the page')
-    parser.add_argument('-n' , '--network',  type=str,  default='',  help='192.168.1.1/24')
+    parser.add_argument('-n' , '--network',  type=str,  default='',  help='eg:192.168.1.0/24')
+    parser.add_argument('-p' , '--port',  type=str,  default='',  help='eg:80,8081,8088')
 
     #args = parser.parse_args(['--version'])
     args = parser.parse_args()
@@ -116,8 +131,8 @@ if __name__ == '__main__':
     if args.keyword_filter:
         keyword_filter = args.keyword_filter
 
-    #pool = Pool(int(thread_count))
-    pool = threadpool.ThreadPool(int(thread_count))
+    pool = Pool(int(thread_count))
+    #pool = threadpool.ThreadPool(int(thread_count))
 
 
     #lines = open(input_file,'r').readlines()
@@ -132,18 +147,45 @@ if __name__ == '__main__':
             if 'http' not in url:
                 url = 'http://'+ url
             urls.append(url)
+            #仅仅在有端口时生效
+            if args.port:
+                if ',' in args.port:
+                    original_port = urlparse.urlparse(url).port
+                    if original_port:
+                        url = url.replace(':' + original_port, '')
+                    if ',' in args.port:
+                        for port in args.port.split(','):
+                            purl = url + ':' + port
+                            urls.append(purl)
+                    else:
+                        purl = url + ':' + args.port
+                        urls.append(purl)
     elif args.network:
         ips = IP(args.network) 
         for ip in ips:
             url = 'http://'+ str(ip)
             urls.append(url)
+            #仅仅在有端口时生效
+            if args.port:
+                original_port = urlparse.urlparse(url).port
+                if original_port:
+                    url = url.replace(':' + original_port, '')
+                if ',' in args.port:
+                    for port in args.port.split(','):
+                        purl = url + ':' + port
+                        urls.append(purl)
+                else:
+                    purl = url + ':' + args.port
+                    urls.append(purl)
+            
     else:
         print "[x]U haven't input now...."
         exit(0)
-    #pool.map(view, urls)
-    reqs = threadpool.makeRequests(view, urls)
+    pool.map(view, urls)
+    #print urls
+    """ reqs = threadpool.makeRequests(view, urls)
     [pool.putRequest(req) for req in reqs]
-    pool.wait()
+    pool.wait() """
 
     o.writelines(u'</table>')
     o.close()
