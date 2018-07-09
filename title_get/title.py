@@ -2,7 +2,9 @@
 #coding=utf-8
 
 import requests
-requests.packages.urllib3.disable_warnings()
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+# 禁用安全请求警告
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 import re
 import sys
 reload(sys)
