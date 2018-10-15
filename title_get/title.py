@@ -29,14 +29,23 @@ import urlparse
 headers = {
  'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.108 Safari/537.36'
  }
- 
 
 
+global content_lengths, keyword_filter
+keyword_filter = ''
+content_lengths = []
 
 def view(url):
     try:
         r = requests.get(url,  headers= headers ,timeout = 5 ,verify = False)
+        #默认启用鉴别泛解析
+        if r.headers['Content-Length'] in content_lengths:
+            print '[+]Found same page url...'
+            return
+        else:
+            content_lengths.append( r.headers['Content-Length'] )
     except Exception,e:
+        #print e
         return
     if keyword_filter:
         str_type = chardet.detect(keyword_filter)['encoding'].lower()
@@ -67,7 +76,7 @@ def view(url):
             output_th = unicode('<tr> <th><a href="'+url+'" target="_blank">'+url+'</a></th> <th>'+title+'</th> <th>'+server+'</th> <th>'+str(status)+'</th> </tr>','gbk')
         print '[+]Detecting %s...' % (url)
         o.writelines(output_th)
-    oo.writelines(unicode(url+'\n'))
+        oo.writelines(unicode(url+'\n'))
 
 if __name__ == '__main__':
 
@@ -84,6 +93,7 @@ if __name__ == '__main__':
     parser.add_argument('-k' , '--keyword_filter',  type=str,  default='',  help='the keyword you do not want to see in the page')
     parser.add_argument('-n' , '--network',  type=str,  default='',  help='eg:192.168.1.0/24')
     parser.add_argument('-p' , '--port',  type=str,  default='',  help='eg:80,8081,8088')
+    #parser.add_argument('-fs' , '--filter_same', action="store_true",  default='',  help='filter urls based on same page')
 
     #args = parser.parse_args(['--version'])
     args = parser.parse_args()
@@ -128,8 +138,8 @@ if __name__ == '__main__':
 
 
     #tp = ThreadPool(int(thread_count))
-    global keyword_filter
-    keyword_filter = ""
+    #global keyword_filter
+    #keyword_filter = ""
     if args.keyword_filter:
         keyword_filter = args.keyword_filter
 
@@ -192,5 +202,6 @@ if __name__ == '__main__':
     o.writelines(u'</table>')
     o.close()
     oo.close()
+    
     #view('https://www.baidu.com')
 
